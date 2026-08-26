@@ -31,4 +31,63 @@ def check_data_types(df: pd.DataFrame) -> pd.DataFrame:
 
     return pd.DataFrame({
         "data_type": df.dtypes.astype(str)
-    })
+    })  
+
+
+def check_invalid_values(df, rules):
+    """Check columns against configurable validation rules."""
+
+    results = []
+
+    for column, column_rules in rules.items():
+
+        if column not in df.columns:
+            continue
+
+        for rule, value in column_rules.items():
+
+            if rule == "min":
+                invalid = df[column] < value
+
+            elif rule == "max":
+                invalid = df[column] > value
+
+            elif rule == "allowed":
+                invalid = ~df[column].isin(value)
+
+            else:
+                continue
+
+            results.append(
+                {
+                    "column": column,
+                    "rule": rule,
+                    "invalid_count": int(invalid.sum()),
+                }
+            )
+
+    return pd.DataFrame(results)
+
+
+def check_invalid_dates(df, columns):
+    """Check columns for invalid date values."""
+
+    results = []
+
+    for column in columns:
+
+        if column not in df.columns:
+            continue
+
+        parsed_dates = pd.to_datetime(df[column], errors="coerce")
+
+        invalid = parsed_dates.isna() & df[column].notna()
+
+        results.append(
+            {
+                "column": column,
+                "invalid_count": int(invalid.sum()),
+            }
+        )
+
+    return pd.DataFrame(results)

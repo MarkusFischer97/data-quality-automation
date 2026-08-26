@@ -1,17 +1,15 @@
 # test_checks.py
 import pandas as pd
 import pytest
+from src.rules import VALIDATION_RULES
 
 from src.checks import (
     check_data_types,
     check_duplicates,
     check_missing_values,
+    check_invalid_values,
+    check_invalid_dates
 )
-
-
-@pytest.fixture
-def sample_df():
-    return pd.read_csv("data/sample_data.csv")
 
 
 def test_missing_values(sample_df):
@@ -32,3 +30,27 @@ def test_data_types(sample_df):
     assert result.loc["customer_id", "data_type"] == "int64"
     assert result.loc["quantity", "data_type"] == "int64"
     assert result.loc["revenue", "data_type"] == "float64"
+
+
+def test_invalid_values(sample_df):
+    result = check_invalid_values(sample_df, VALIDATION_RULES)
+
+    assert result.loc[
+        result["column"] == "quantity", "invalid_count"
+    ].iloc[0] == 1
+
+    assert result.loc[
+        result["column"] == "revenue", "invalid_count"
+    ].iloc[0] == 1
+
+    assert result.loc[
+        result["column"] == "region", "invalid_count"
+    ].iloc[0] == 1
+
+
+def test_invalid_dates(sample_df):
+    result = check_invalid_dates(sample_df, ["date"])
+
+    assert result.loc[
+        result["column"] == "date", "invalid_count"
+    ].iloc[0] == 1
