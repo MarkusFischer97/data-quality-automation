@@ -45,7 +45,19 @@ def run_pipeline(df):
     )
 
     # Quality checks after cleaning
+    cleaned_missing_values = check_missing_values(cleaned_df)
     cleaned_duplicates = check_duplicates(cleaned_df)
+    cleaned_data_types = check_data_types(cleaned_df)
+    cleaned_invalid_values = check_invalid_values(
+        cleaned_df,
+        VALIDATION_RULES
+    )
+    cleaned_invalid_dates = check_invalid_dates(
+        cleaned_df,
+        ["date"]
+    )
+
+
 
     return {
         "cleaned_data": cleaned_df,
@@ -58,4 +70,9 @@ def run_pipeline(df):
         "numeric_profile": numeric_profile,
         "categorical_profile": categorical_profile,
         "cleaned_duplicates": cleaned_duplicates,
+        "cleaned_missing_values": cleaned_missing_values,
+        "cleaned_duplicates": cleaned_duplicates,
+        "cleaned_data_types": cleaned_data_types,
+        "cleaned_invalid_values": cleaned_invalid_values,
+        "cleaned_invalid_dates": cleaned_invalid_dates,
     }

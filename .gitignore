@@ -216,3 +216,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project-specific
+reports/
+
+# Local data
+data/*.xlsx
+data/*.xls
+data/*.csv
+!data/sample_data.csv
+
+# VS Code
+.vscode/

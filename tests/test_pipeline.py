@@ -11,5 +11,13 @@ def test_run_pipeline(sample_df):
     assert "invalid_values" in result
     assert "dataset_profile" in result
 
+    assert "cleaned_missing_values" in result
+    assert "cleaned_data_types" in result
+    assert "cleaned_invalid_values" in result
+    assert "cleaned_invalid_dates" in result
+
     assert len(result["cleaned_data"]) == 1000
+
+    assert result["duplicates"]["duplicate_count"] == 10
     assert result["cleaned_duplicates"]["duplicate_count"] == 0
+

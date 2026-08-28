@@ -1,0 +1,23 @@
+cleaning:
+  duplicates:
+    enabled: true
+
+  missing_values:
+    enabled: true
+
+    numerical:
+      method: median
+
+    categorical:
+      method: mode
+
+  empty_rows:
+    enabled: false
+
+  empty_columns:
+    enabled: false
+
+  outliers:
+    enabled: false
+    method: winsorize
+    percentile: 0.99
