@@ -1,90 +1,68 @@
+"""Conservative transformations; business-rule violations are not corrected."""
+import numpy as np
 import pandas as pd
+
+from src.checks import parse_dates
 from src.config import get_missing_value_method
 
 
 def remove_duplicates(df):
-    """Return a copy of the dataframe without duplicate rows."""
-
     return df.drop_duplicates().copy()
 
 
-def clean_dates(df, columns):
-    """Convert specified columns to datetime."""
-
-    cleaned_df = df.copy()
-
-    for column in columns:
-        if column not in cleaned_df.columns:
-            continue
-
-        cleaned_df[column] = pd.to_datetime(
-            cleaned_df[column],
-            errors="coerce"
-        )
-
-    return cleaned_df
+def clean_dates(df, columns, date_format="ISO8601"):
+    cleaned = df.copy()
+    for column in dict.fromkeys(columns):
+        if column in cleaned.columns:
+            cleaned[column] = parse_dates(cleaned[column], date_format)
+    return cleaned
 
 
 def clean_text_columns(df, columns):
-    """Standardize text values in specified columns."""
-
-    cleaned_df = df.copy()
-
-    for column in columns:
-        if column not in cleaned_df.columns:
-            continue
-
-        cleaned_df[column] = (
-            cleaned_df[column]
-            .astype("string")
-            .str.strip()
-        )
-
-    return cleaned_df
+    """Trim surrounding whitespace; blank text becomes missing. Preserve case."""
+    cleaned = df.copy()
+    for column in dict.fromkeys(columns):
+        if column in cleaned.columns:
+            text = cleaned[column].astype("string").str.strip()
+            cleaned[column] = text.mask(text.eq(""), pd.NA)
+    return cleaned
 
 
 def impute_missing_values(df, config):
-    """Impute missing values according to the configuration."""
-
-    cleaned_df = df.copy()
-
+    cleaned = df.copy()
     if not config.cleaning.missing_values.enabled:
-        return cleaned_df
-
-    for column in cleaned_df.columns:
-
-        if not cleaned_df[column].isna().any():
+        return cleaned
+    for column in cleaned.columns:
+        source = cleaned[column]
+        if not source.isna().any():
             continue
-
-        if pd.api.types.is_numeric_dtype(cleaned_df[column]):
+        if pd.api.types.is_numeric_dtype(source) and not pd.api.types.is_bool_dtype(source):
             data_type = "numerical"
-        elif pd.api.types.is_string_dtype(cleaned_df[column]):
+        elif (pd.api.types.is_string_dtype(source) or source.dtype == object
+              or isinstance(source.dtype, pd.CategoricalDtype)):
             data_type = "categorical"
         else:
             continue
-
-        method = get_missing_value_method(
-            config,
-            column,
-            data_type,
-        )
-
-        if method == "mean":
-            cleaned_df[column] = cleaned_df[column].fillna(
-                cleaned_df[column].mean()
-            )
-
-        elif method == "median":
-            cleaned_df[column] = cleaned_df[column].fillna(
-                cleaned_df[column].median()
-            )
-
-        elif method == "mode":
-            mode = cleaned_df[column].mode()
-
-            if not mode.empty:
-                cleaned_df[column] = cleaned_df[column].fillna(
-                    mode.iloc[0]
-                )
-
-    return cleaned_df
+        method = get_missing_value_method(config, column, data_type)
+        if method == "skip":
+            continue
+        if data_type == "categorical" and method != "mode":
+            raise ValueError(f"Column '{column}' is categorical; use mode or skip, not {method}")
+        donors = source.dropna()
+        if data_type == "numerical":
+            donors = donors[np.isfinite(donors)]
+        if donors.empty:
+            continue
+        if method == "mode":
+            modes = donors.mode()
+            if modes.empty:
+                continue
+            fill_value = modes.iloc[0]
+        else:
+            fill_value = donors.mean() if method == "mean" else donors.median()
+        if pd.isna(fill_value) or (data_type == "numerical" and not np.isfinite(fill_value)):
+            continue
+        if pd.api.types.is_integer_dtype(source) and float(fill_value) % 1:
+            source = source.astype("Float64")
+        cleaned[column] = source.fillna(fill_value)
+    return cleaned

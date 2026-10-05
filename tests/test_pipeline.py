@@ -1,9 +1,9 @@
 from src.pipeline import run_pipeline
 
 
-def test_run_pipeline(sample_df):
+def test_run_pipeline(sample_df, sample_config):
 
-    result = run_pipeline(sample_df)
+    result = run_pipeline(sample_df, sample_config)
 
     assert "cleaned_data" in result
     assert "missing_values" in result

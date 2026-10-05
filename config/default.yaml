@@ -1,23 +1,25 @@
+# Defaults for the bundled synthetic sales dataset.
 cleaning:
   duplicates:
     enabled: true
-
   missing_values:
     enabled: true
-
     numerical:
       method: median
-
     categorical:
       method: mode
+  date_columns: [date]
+  text_columns: [product, region]
+  date_format: ISO8601
 
-  empty_rows:
-    enabled: false
+overrides:
+  customer_id:
+    method: skip
 
-  empty_columns:
-    enabled: false
-
-  outliers:
-    enabled: false
-    method: winsorize
-    percentile: 0.99
+validation_rules:
+  quantity:
+    min: 1
+  revenue:
+    min: 0
+  region:
+    allowed: [North, South, East, West]

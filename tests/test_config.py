@@ -14,8 +14,8 @@ def test_load_default_config():
     assert config.cleaning.missing_values.enabled is True
     assert config.cleaning.missing_values.numerical.method == "median"
     assert config.cleaning.missing_values.categorical.method == "mode"
-    assert config.cleaning.outliers.enabled is False
-    assert config.cleaning.outliers.percentile == 0.99
+    assert config.cleaning.date_columns == ["date"]
+    assert config.validation_rules["quantity"].min == 1
 
 
 def test_invalid_imputation_method(tmp_path):
@@ -24,15 +24,15 @@ def test_invalid_imputation_method(tmp_path):
 
     config_file.write_text(
         """
-        cleaning:
-        missing_values:
-            numerical:
-            method: banana
-        """,
-                encoding="utf-8",
-            )
+cleaning:
+  missing_values:
+    numerical:
+      method: banana
+""",
+        encoding="utf-8",
+    )
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="cleaning.missing_values.numerical.method"):
         load_config(config_file)
 
 

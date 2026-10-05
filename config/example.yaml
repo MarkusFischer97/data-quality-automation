@@ -1,0 +1,25 @@
+# Copy this example and adapt column names/rules to your CSV.
+cleaning:
+  duplicates:
+    enabled: true
+  missing_values:
+    enabled: true
+    numerical:
+      method: median
+    categorical:
+      method: mode
+  date_columns: [date]
+  text_columns: [product, region]
+  date_format: ISO8601
+
+overrides:
+  customer_id:
+    method: skip
+
+validation_rules:
+  quantity:
+    min: 1
+  revenue:
+    min: 0
+  region:
+    allowed: [North, South, East, West]

@@ -1,7 +1,5 @@
 # test_checks.py
 import pandas as pd
-import pytest
-from src.rules import VALIDATION_RULES
 
 from src.checks import (
     check_data_types,
@@ -32,15 +30,15 @@ def test_data_types(sample_df):
     assert result.loc["revenue", "data_type"] == "float64"
 
 
-def test_invalid_values(sample_df):
-    result = check_invalid_values(sample_df, VALIDATION_RULES)
+def test_invalid_values(sample_df, sample_config):
+    result = check_invalid_values(sample_df, sample_config.validation_rules)
 
     assert result.loc[
-        result["column"] == "quantity", "invalid_count"
+        (result["column"] == "quantity") & (result["rule"] == "min"), "invalid_count"
     ].iloc[0] == 1
 
     assert result.loc[
-        result["column"] == "revenue", "invalid_count"
+        (result["column"] == "revenue") & (result["rule"] == "min"), "invalid_count"
     ].iloc[0] == 1
 
     assert result.loc[
